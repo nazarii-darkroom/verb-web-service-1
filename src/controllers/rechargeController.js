@@ -1,4 +1,4 @@
-const axios = require('axios');
+const axios = require("axios");
 
 // Update quantity by subscriptionId
 const updateQuantityBySubscriptionId = async (req, res) => {
@@ -10,32 +10,32 @@ const updateQuantityBySubscriptionId = async (req, res) => {
     // Validate input
     if (!subscriptionId) {
       return res.status(400).json({
-        error: 'Subscription ID is required'
+        error: "Subscription ID is required",
       });
     }
 
     if (!customer_id) {
       return res.status(400).json({
-        error: 'Customer ID is required as query parameter'
+        error: "Customer ID is required as query parameter",
       });
     }
 
     if (!quantity || quantity < 1) {
       return res.status(400).json({
-        error: 'Valid quantity (minimum 1) is required'
+        error: "Valid quantity (minimum 1) is required",
       });
     }
 
     // Check for required environment variables
     if (!process.env.RECHARGE_API_TOKEN) {
       return res.status(500).json({
-        error: 'Recharge API token not configured'
+        error: "Recharge API token not configured",
       });
     }
 
     if (!process.env.RECHARGE_API_VERSION) {
       return res.status(500).json({
-        error: 'Recharge API version not configured'
+        error: "Recharge API version not configured",
       });
     }
 
@@ -44,10 +44,10 @@ const updateQuantityBySubscriptionId = async (req, res) => {
       `https://api.rechargeapps.com/subscriptions/${subscriptionId}`,
       {
         headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
+          "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+          "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -56,9 +56,9 @@ const updateQuantityBySubscriptionId = async (req, res) => {
     // Verify that the customer_id matches the subscription's customer_id
     if (subscription.customer_id !== parseInt(customer_id)) {
       return res.status(403).json({
-        error: 'Unauthorized: Customer ID does not match subscription owner',
+        error: "Unauthorized: Customer ID does not match subscription owner",
         provided_customer_id: customer_id,
-        subscription_customer_id: subscription.customer_id
+        subscription_customer_id: subscription.customer_id,
       });
     }
 
@@ -66,53 +66,54 @@ const updateQuantityBySubscriptionId = async (req, res) => {
     const updateResponse = await axios.put(
       `https://api.rechargeapps.com/subscriptions/${subscriptionId}`,
       {
-        quantity: parseInt(quantity)
+        quantity: parseInt(quantity),
       },
       {
         headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
+          "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+          "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    console.log('Update response status:', updateResponse.status);
-    console.log('Update response data:', JSON.stringify(updateResponse.data, null, 2));
+    console.log("Update response status:", updateResponse.status);
+    console.log("Update response data:", JSON.stringify(updateResponse.data, null, 2));
 
     // Fetch the updated subscription to get the most current data
     const fetchResponse = await axios.get(
       `https://api.rechargeapps.com/subscriptions/${subscriptionId}`,
       {
         headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
+          "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+          "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+          "Content-Type": "application/json",
+        },
       }
     );
 
     const updatedSubscription = fetchResponse.data.subscription;
-    
+
     console.log(`Successfully updated subscription ${subscriptionId} to quantity ${quantity}`);
-    console.log('Requested quantity:', quantity);
-    console.log('Actual quantity in response:', updatedSubscription.quantity);
-    console.log('Full subscription response:', JSON.stringify(updatedSubscription, null, 2));
-    
+    console.log("Requested quantity:", quantity);
+    console.log("Actual quantity in response:", updatedSubscription.quantity);
+    console.log("Full subscription response:", JSON.stringify(updatedSubscription, null, 2));
+
     // Check if the quantity was actually updated
     const quantityUpdated = updatedSubscription.quantity === parseInt(quantity);
-    
+
     res.json({
-      message: quantityUpdated ? "Quantity updated successfully" : "Quantity update may not have been applied",
+      message: quantityUpdated
+        ? "Quantity updated successfully"
+        : "Quantity update may not have been applied",
       subscriptionId,
       quantity: updatedSubscription.quantity, // Use actual quantity from response
       requestedQuantity: parseInt(quantity),
       quantityUpdated: quantityUpdated,
-      subscription: updatedSubscription
+      subscription: updatedSubscription,
     });
-
   } catch (error) {
-    console.error('Error updating subscription quantity:', error);
+    console.error("Error updating subscription quantity:", error);
 
     // Handle specific error cases
     if (error.response) {
@@ -121,31 +122,31 @@ const updateQuantityBySubscriptionId = async (req, res) => {
 
       if (status === 404) {
         return res.status(404).json({
-          error: 'Subscription not found',
-          subscriptionId: req.params.subscriptionId
+          error: "Subscription not found",
+          subscriptionId: req.params.subscriptionId,
         });
       } else if (status === 422) {
         return res.status(422).json({
-          error: 'Invalid request data',
-          details: errorData
+          error: "Invalid request data",
+          details: errorData,
         });
       } else if (status === 401) {
         return res.status(401).json({
-          error: 'Unauthorized - Invalid API token'
+          error: "Unauthorized - Invalid API token",
         });
       } else {
         return res.status(status).json({
-          error: 'Recharge API error',
-          details: errorData
+          error: "Recharge API error",
+          details: errorData,
         });
       }
     } else if (error.request) {
       return res.status(503).json({
-        error: 'Unable to connect to Recharge API'
+        error: "Unable to connect to Recharge API",
       });
     } else {
       return res.status(500).json({
-        error: 'Internal server error'
+        error: "Internal server error",
       });
     }
   }
@@ -160,26 +161,26 @@ const getSubscriptionById = async (req, res) => {
     // Validate input
     if (!subscriptionId) {
       return res.status(400).json({
-        error: 'Subscription ID is required'
+        error: "Subscription ID is required",
       });
     }
 
     if (!customer_id) {
       return res.status(400).json({
-        error: 'Customer ID is required as query parameter'
+        error: "Customer ID is required as query parameter",
       });
     }
 
     // Check for required environment variables
     if (!process.env.RECHARGE_API_TOKEN) {
       return res.status(500).json({
-        error: 'Recharge API token not configured'
+        error: "Recharge API token not configured",
       });
     }
 
     if (!process.env.RECHARGE_API_VERSION) {
       return res.status(500).json({
-        error: 'Recharge API version not configured'
+        error: "Recharge API version not configured",
       });
     }
 
@@ -188,10 +189,10 @@ const getSubscriptionById = async (req, res) => {
       `https://api.rechargeapps.com/subscriptions/${subscriptionId}`,
       {
         headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
+          "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+          "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -200,21 +201,22 @@ const getSubscriptionById = async (req, res) => {
     // Verify that the customer_id matches the subscription's customer_id
     if (subscription.customer_id !== parseInt(customer_id)) {
       return res.status(403).json({
-        error: 'Unauthorized: Customer ID does not match subscription owner',
+        error: "Unauthorized: Customer ID does not match subscription owner",
         provided_customer_id: customer_id,
-        subscription_customer_id: subscription.customer_id
+        subscription_customer_id: subscription.customer_id,
       });
     }
 
-    console.log(`Successfully retrieved subscription ${subscriptionId} for customer ${customer_id}`);
+    console.log(
+      `Successfully retrieved subscription ${subscriptionId} for customer ${customer_id}`
+    );
 
     res.json({
       message: "Subscription retrieved successfully",
-      subscription
+      subscription,
     });
-
   } catch (error) {
-    console.error('Error retrieving subscription:', error);
+    console.error("Error retrieving subscription:", error);
 
     // Handle specific error cases
     if (error.response) {
@@ -223,26 +225,26 @@ const getSubscriptionById = async (req, res) => {
 
       if (status === 404) {
         return res.status(404).json({
-          error: 'Subscription not found',
-          subscriptionId: req.params.subscriptionId
+          error: "Subscription not found",
+          subscriptionId: req.params.subscriptionId,
         });
       } else if (status === 401) {
         return res.status(401).json({
-          error: 'Unauthorized - Invalid API token'
+          error: "Unauthorized - Invalid API token",
         });
       } else {
         return res.status(status).json({
-          error: 'Recharge API error',
-          details: errorData
+          error: "Recharge API error",
+          details: errorData,
         });
       }
     } else if (error.request) {
       return res.status(503).json({
-        error: 'Unable to connect to Recharge API'
+        error: "Unable to connect to Recharge API",
       });
     } else {
       return res.status(500).json({
-        error: 'Internal server error'
+        error: "Internal server error",
       });
     }
   }
@@ -255,186 +257,166 @@ const addProductToNextOrder = async (req, res) => {
     const { customer_id } = req.query;
     const { product_id, variant_id, quantity = 1 } = req.body;
 
-    // Validate input
+    // --- Validate input ---
     if (!charge_id) {
-      return res.status(400).json({
-        error: 'Charge ID is required'
-      });
+      return res.status(400).json({ error: "Charge ID is required" });
     }
 
     if (!customer_id) {
-      return res.status(400).json({
-        error: 'Customer ID is required as query parameter'
-      });
+      return res.status(400).json({ error: "Customer ID is required as query parameter" });
     }
 
     if (!product_id) {
-      return res.status(400).json({
-        error: 'Product ID is required'
-      });
+      return res.status(400).json({ error: "Product ID is required" });
     }
 
     if (!variant_id) {
-      return res.status(400).json({
-        error: 'Variant ID is required'
-      });
+      return res.status(400).json({ error: "Variant ID is required" });
     }
 
-    if (!quantity || quantity < 1) {
-      return res.status(400).json({
-        error: 'Valid quantity (minimum 1) is required'
-      });
+    if (!quantity || Number(quantity) < 1) {
+      return res.status(400).json({ error: "Valid quantity (minimum 1) is required" });
     }
 
-    // Check for required environment variables
+    // --- Check environment variables ---
     if (!process.env.RECHARGE_API_TOKEN) {
-      return res.status(500).json({
-        error: 'Recharge API token not configured'
-      });
+      return res.status(500).json({ error: "Recharge API token not configured" });
     }
 
     if (!process.env.RECHARGE_API_VERSION) {
-      return res.status(500).json({
-        error: 'Recharge API version not configured'
-      });
+      return res.status(500).json({ error: "Recharge API version not configured" });
     }
 
-    // Get charge details to extract address_id and customer_id
-    console.log(`Fetching charge ${charge_id}...`);
-    const chargeResponse = await axios.get(
-      `https://api.rechargeapps.com/charges/${charge_id}`,
-      {
-        headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    // --- Fetch charge details ---
+    console.log(`🔍 Fetching charge ${charge_id}...`);
+    const chargeResponse = await axios.get(`https://api.rechargeapps.com/charges/${charge_id}`, {
+      headers: {
+        "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+        "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+        "Content-Type": "application/json",
+      },
+    });
 
-    console.log('Charge response status:', chargeResponse.status);
-    console.log('Charge response data:', JSON.stringify(chargeResponse.data, null, 2));
+    const charge = chargeResponse.data?.charge;
 
-    const charge = chargeResponse.data.charge;
-    
     if (!charge) {
       return res.status(404).json({
-        error: 'Charge data not found in response',
-        order_id: parseInt(charge_id),
-        response_data: chargeResponse.data
+        error: "Charge data not found in response",
+        charge_id: Number(charge_id),
+        response_data: chargeResponse.data,
       });
     }
 
-    const chargeCustomerId = charge.customer.id;
-    const address_id = charge.address_id;
+    // --- Extract IDs ---
+    const chargeCustomerId = Number(charge.customer_id);
+    const address_id = Number(charge.address_id);
 
     if (!chargeCustomerId) {
       return res.status(400).json({
-        error: 'Charge does not have a customer_id',
-        charge_id: parseInt(charge_id)
+        error: "Charge does not have a customer_id",
+        charge_id: Number(charge_id),
       });
     }
 
     if (!address_id) {
       return res.status(400).json({
-        error: 'Charge does not have an address_id',
-        charge_id: parseInt(charge_id)
+        error: "Charge does not have an address_id",
+        charge_id: Number(charge_id),
       });
     }
 
-    // Verify that the customer_id matches the order's customer_id
-    if (chargeCustomerId !== parseInt(customer_id)) {
+    // --- Verify customer ownership ---
+    if (chargeCustomerId !== Number(customer_id)) {
       return res.status(403).json({
-        error: 'Unauthorized: Customer ID does not match order owner',
-        provided_customer_id: customer_id,
-        charge_customer_id: orderCustomerId,
-        charge_id: parseInt(order_id)
+        error: "Unauthorized: Customer ID does not match charge owner",
+        provided_customer_id: Number(customer_id),
+        charge_customer_id: chargeCustomerId,
+        charge_id: Number(charge_id),
       });
     }
 
-    console.log(`Using address ${address_id} from charge ${charge_id} for customer ${chargeCustomerId}`);
-
-    // Create onetime product for next order
-    const onetimeData = {
-      add_to_next_charge: true,
-      address_id: parseInt(address_id),
-      external_product_id: {
-        ecommerce: product_id
-      },
-      external_variant_id: {
-        ecommerce: variant_id
-      },
-      quantity: parseInt(quantity)
-    };
-
-    console.log('Creating onetime product:', JSON.stringify(onetimeData, null, 2));
-
-    const onetimeResponse = await axios.post(
-      'https://api.rechargeapps.com/onetimes',
-      onetimeData,
-      {
-        headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
-      }
+    console.log(
+      `✅ Using address ${address_id} from charge ${charge_id} for customer ${chargeCustomerId}`
     );
 
-    const onetime = onetimeResponse.data.onetime;
+    // --- Create onetime product for next charge ---
+    const onetimeData = {
+      add_to_next_charge: true,
+      address_id,
+      external_product_id: { ecommerce: product_id },
+      external_variant_id: { ecommerce: variant_id },
+      quantity: Number(quantity),
+    };
 
-    console.log(`Successfully added product to next charge for customer ${chargeCustomerId} using charge ${charge_id}`);
+    console.log(`🛒 Creating onetime product for customer ${chargeCustomerId}...`);
 
-    res.json({
-      message: "Product added to next order successfully",
-      order_id: parseInt(order_id),
-      customer_id: parseInt(orderCustomerId),
-      address_id: parseInt(address_id),
-      onetime: onetime
+    const onetimeResponse = await axios.post("https://api.rechargeapps.com/onetimes", onetimeData, {
+      headers: {
+        "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+        "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+        "Content-Type": "application/json",
+      },
     });
 
+    const onetime = onetimeResponse.data?.onetime;
+
+    console.log(`🎉 Successfully added product to next charge for customer ${chargeCustomerId}`);
+
+    // --- Response ---
+    return res.json({
+      message: "Product added to next order successfully",
+      charge_id: Number(charge_id),
+      customer_id: chargeCustomerId,
+      address_id,
+      onetime,
+    });
   } catch (error) {
-    console.error('Error adding product to next order:', error);
+    console.error("❌ Error adding product to next order:", error.message);
 
-    // Handle specific error cases
+    // --- Handle API-related errors ---
     if (error.response) {
-      const status = error.response.status;
-      const errorData = error.response.data;
-
-      console.log('API Error Status:', status);
-      console.log('API Error Data:', JSON.stringify(errorData, null, 2));
+      const { status, data } = error.response;
+      console.error("API Error:", status, data);
 
       if (status === 404) {
         return res.status(404).json({
-          error: 'Charge not found',
-          order_id: req.params.order_id,
-          details: errorData,
-          suggestion: 'Please verify the charge ID exists in your Recharge account'
-        });
-      } else if (status === 422) {
-        return res.status(422).json({
-          error: 'Invalid request data',
-          details: errorData
-        });
-      } else if (status === 401) {
-        return res.status(401).json({
-          error: 'Unauthorized - Invalid API token'
-        });
-      } else {
-        return res.status(status).json({
-          error: 'Recharge API error',
-          details: errorData
+          error: "Charge not found",
+          charge_id: req.params.charge_id,
+          details: data,
+          suggestion: "Verify that the charge ID exists in your Recharge account",
         });
       }
-    } else if (error.request) {
-      return res.status(503).json({
-        error: 'Unable to connect to Recharge API'
-      });
-    } else {
-      return res.status(500).json({
-        error: 'Internal server error'
+
+      if (status === 422) {
+        return res.status(422).json({
+          error: "Invalid request data",
+          details: data,
+        });
+      }
+
+      if (status === 401) {
+        return res.status(401).json({
+          error: "Unauthorized - Invalid API token",
+        });
+      }
+
+      return res.status(status).json({
+        error: "Recharge API error",
+        details: data,
       });
     }
+
+    // --- Handle connection or internal errors ---
+    if (error.request) {
+      return res.status(503).json({
+        error: "Unable to connect to Recharge API",
+      });
+    }
+
+    return res.status(500).json({
+      error: "Internal server error",
+      details: error.message,
+    });
   }
 };
 
@@ -445,7 +427,7 @@ const testCustomerAccess = async (req, res) => {
 
     if (!customer_id) {
       return res.status(400).json({
-        error: 'Customer ID is required'
+        error: "Customer ID is required",
       });
     }
 
@@ -455,38 +437,42 @@ const testCustomerAccess = async (req, res) => {
       `https://api.rechargeapps.com/customers/${customer_id}`,
       {
         headers: {
-          'X-Recharge-Access-Token': process.env.RECHARGE_API_TOKEN,
-          'X-Recharge-Version': process.env.RECHARGE_API_VERSION,
-          'Content-Type': 'application/json'
-        }
+          "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+          "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    console.log('Customer test response:', JSON.stringify(customerResponse.data, null, 2));
+    console.log("Customer test response:", JSON.stringify(customerResponse.data, null, 2));
 
     res.json({
       message: "Customer access test successful",
       customer_id: parseInt(customer_id),
       customer: customerResponse.data.customer,
-      has_default_address: !!customerResponse.data.customer?.default_address
+      has_default_address: !!customerResponse.data.customer?.default_address,
     });
-
   } catch (error) {
-    console.error('Customer access test failed:', error);
+    console.error("Customer access test failed:", error);
 
     if (error.response) {
       return res.status(error.response.status).json({
-        error: 'Customer access test failed',
+        error: "Customer access test failed",
         status: error.response.status,
         details: error.response.data,
-        customer_id: req.params.customer_id
+        customer_id: req.params.customer_id,
       });
     } else {
       return res.status(500).json({
-        error: 'Internal server error during customer test'
+        error: "Internal server error during customer test",
       });
     }
   }
 };
 
-module.exports = { updateQuantityBySubscriptionId, getSubscriptionById, addProductToNextOrder, testCustomerAccess };
+module.exports = {
+  updateQuantityBySubscriptionId,
+  getSubscriptionById,
+  addProductToNextOrder,
+  testCustomerAccess,
+};
