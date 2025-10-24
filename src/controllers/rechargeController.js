@@ -308,7 +308,7 @@ const addProductToNextOrder = async (req, res) => {
     }
 
     // --- Extract IDs ---
-    const chargeCustomerId = Number(charge.customer_id);
+    const chargeCustomerId = Number(charge.customer.id);
     const address_id = Number(charge.address_id);
 
     if (!chargeCustomerId) {
