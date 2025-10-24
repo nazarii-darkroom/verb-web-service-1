@@ -420,6 +420,56 @@ const addProductToNextOrder = async (req, res) => {
   }
 };
 
+// List charges by customer ID
+const listChargesByCustomerId = async (req, res) => {
+  try {
+    const { customer_id } = req.query; // note: using query parameter
+
+    if (!customer_id) {
+      return res.status(400).json({
+        error: "Customer ID is required",
+      });
+    }
+
+    console.log(`Fetching charges for customer ${customer_id}...`);
+
+    // Call Recharge API to list charges for the customer
+    const response = await axios.get(`https://api.rechargeapps.com/charges`, {
+      headers: {
+        "X-Recharge-Access-Token": process.env.RECHARGE_API_TOKEN,
+        "X-Recharge-Version": process.env.RECHARGE_API_VERSION,
+        "Content-Type": "application/json",
+      },
+      params: {
+        customer_id, // pass customer_id as query param
+      },
+    });
+
+    const charges = response.data.charges || [];
+
+    res.json({
+      customer_id: parseInt(customer_id),
+      total_charges: charges.length,
+      charges,
+    });
+  } catch (error) {
+    console.error("Failed to fetch charges:", error);
+
+    if (error.response) {
+      return res.status(error.response.status).json({
+        error: "Failed to fetch charges",
+        status: error.response.status,
+        details: error.response.data,
+        customer_id: req.query.customer_id,
+      });
+    } else {
+      return res.status(500).json({
+        error: "Internal server error during charges fetch",
+      });
+    }
+  }
+};
+
 // Test customer access (for debugging)
 const testCustomerAccess = async (req, res) => {
   try {
@@ -475,4 +525,5 @@ module.exports = {
   getSubscriptionById,
   addProductToNextOrder,
   testCustomerAccess,
+  listChargesByCustomerId,
 };
