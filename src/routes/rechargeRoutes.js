@@ -3,7 +3,7 @@ const router = express.Router();
 const { updateQuantityBySubscriptionId, getSubscriptionById, addProductToNextOrder, testCustomerAccess, listChargesByCustomerId } = require('../controllers/rechargeController');
 
 // GET /api/recharge/:subscriptionId
-router.get('/:subscriptionId', getSubscriptionById);
+router.get('/subscription/:subscriptionId', getSubscriptionById);
 
 // GET /charges
 router.get('/charges', listChargesByCustomerId);
